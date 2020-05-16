@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <!-- 引入 echarts.js -->
+    <script src="/static/js/echarts.min.js"></script>
+	<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+
+</head>
+<body>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div class="search">
+        <input type="text" placeholder="请输入..." name="" id="search" value="" />
+        <!--<button onClick="get_value()"><i>搜索</i></button>-->
+        <input id="submit" type="button" value="搜索">
+    </div>
+    <div id="main" style="width: 2000px;height:1000px;"></div>
+    <script type="text/javascript">
+        
+
+    $("#submit").click(function(){
+        var search_input=document.getElementById("search").value;
+        
+       
+        $.ajax({
+                url:"http://127.0.0.1:5000/search_input",
+                type:"get",
+                traditional:true,
+                data:{name:search_input}, 
+                success:function(data){
+                     console.log(data)
+                     dataJson(data) 
+    					},
+                error:function(){
+        					alert("error")
+    					}
+            })
+        })
+
+		function xiazuan(cur_node){
+			$.ajax({
+					url:"http://127.0.0.1:5000/xiazuan",
+					type:"get",
+					traditional:true,
+                  //下面的data是前端的输入框的数据
+					data:{name:["下钻",cur_node]}, 
+                  //下面函数的data是flask返回过来的jsonify()
+					success:function(data){
+                       console.log("下钻的节点",cur_node),  
+						  dataJson(data) 
+							},
+					error:function(){
+								alert("error")
+							}
+				})
+			}        
+    
+        function dataJson(data1) {
+			        // 基于准备好的dom，初始化echarts实例
+			
+			var myChart = echarts.init(document.getElementById("main"));
+
+
+			// 指定图表的配置项和数据
+			let data = data1
+
+			const color1 = '#006acc';
+			const color2 = '#ff7d18';
+			const color3 = '#10a050';
+
+			data.nodes.forEach(node => {
+			  if (node.category === 0) {
+				node.symbolSize = 100;
+				node.itemStyle = {
+                    color:color1,		
+					};
+			  } else if (node.category === 1) {
+				node.itemStyle = {
+				  color: color2
+				};
+			  }
+			});
+			data.links.forEach(link => {
+				
+			  link.label = {
+				align: 'center',
+				fontSize: 12
+			  };
+			  
+			  if (link.name === '参股') {
+				link.lineStyle = {
+				  color: color2
+				}
+			  } else if (link.name === '董事') {
+				link.lineStyle = {
+				  color: color1
+				}
+			  } else if (link.name === '法人') {
+				link.lineStyle = {
+				  color: color3
+				}
+			  }
+			});
+
+			let categories = [{
+				name: '公司',
+				itemStyle: {
+					color: color1
+				}
+			  },
+			  {
+				name: '董事',
+				itemStyle: {
+					color: color2
+				}
+			}]
+
+			option = {
+			  //title: {
+				//text: '知识图谱',
+			  //},
+			  legend: [{
+				// selectedMode: 'single',
+				data: categories.map(x => x.name),
+				// icon: 'circle'
+			  }],
+			  series: [{
+				type: 'graph',
+				layout: 'force',
+				symbolSize: 58,
+				draggable: true,
+				roam: true,
+				focusNodeAdjacency: true,
+				categories: categories,
+				edgeSymbol: ['', 'arrow'],
+				// edgeSymbolSize: [80, 10],
+				edgeLabel: {
+				  normal: {
+					show: true,
+					textStyle: {
+					  fontSize: 20
+					},
+					formatter(x) {
+					  return x.data.name;
+					}
+				  }
+				},
+				label: {
+					show: true
+				},
+				force: {
+				  repulsion: 2000,
+				  edgeLength: 120
+				},
+				data: data.nodes,
+				links: data.links
+			  }]
+			}
+
+
+			// 使用刚指定的配置项和数据显示图表。
+			myChart.setOption(option);
+			}
+		</script>
+  
+    
+
+</body>
+</html>
